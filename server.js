@@ -16,6 +16,9 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change-me-in-production-please';
 
+// Elegy, the private playlist room at /music. Unlinked from the site on purpose.
+require('./music/router')(app);
+
 app.use(express.json({ limit: '2mb' }));
 app.use(cookieParser());
 app.use(session({

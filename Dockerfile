@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM node:24-alpine
 
 # Build deps needed for better-sqlite3
 RUN apk add --no-cache python3 make g++
@@ -15,4 +15,4 @@ RUN mkdir -p /app/data
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["node", "--no-warnings=ExperimentalWarning", "server.js"]
