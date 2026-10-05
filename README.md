@@ -130,6 +130,12 @@ Requires Node 22.13 or newer. It deploys to Railway from the included `Dockerfil
 
 </details>
 
+## 📜 Patch notes
+
+**Latest: Patch 2.3, *"Under Test"*** (Oct 5, 2026). Added an end-to-end smoke suite and a privacy regression test, CI on Node 22 and 24, and moved the server to Node 24.
+
+[Full patch history →](CHANGELOG.md)
+
 ## Roadmap
 
 - [ ] **Keep people signed in across deploys.** Sign-ins currently live in server memory, so every deploy logs everyone out.
