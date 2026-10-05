@@ -2,6 +2,8 @@
 
 **An invite-only manuscript archive and records system for the House Mournstar roleplay community.**
 
+[![CI](https://github.com/AliceMasters/blackarchive/actions/workflows/ci.yml/badge.svg)](https://github.com/AliceMasters/blackarchive/actions/workflows/ci.yml)
+
 The Black Library is the shared record of House Mournstar, an in-character information house in a Skyrim roleplay setting. Members write and read illustrated manuscripts in a page-turning reader, keep dossiers on the people of Skyrim, and coordinate through in-character and out-of-character boards. A single curator runs the archive: they issue accounts, adopt members' work into a master archive, and lend copies back out.
 
 | | |
@@ -22,6 +24,7 @@ The Black Library is the shared record of House Mournstar, an in-character infor
 - [Data model](#data-model)
 - [Configuration](#configuration)
 - [Operations](#operations)
+- [Testing](#testing)
 - [API reference](#api-reference)
 - [Known limitations](#known-limitations)
 - [Repository layout](#repository-layout)
@@ -148,7 +151,7 @@ The database at `$DATA_DIR/archive.db` must sit on a persistent volume, or all d
 
 > The `[[volumes]]` block in `railway.toml` documents the intended mount but does **not** create a volume. A new environment needs one attached explicitly: `railway volume add --mount-path /app/data`. Verify it with `railway volume list`.
 
-**Backups:** take periodic copies of `archive.db` from the volume. The `backups/` directory is the local destination for these snapshots.
+**Backups:** there is no automated backup. Copy `archive.db` off the volume periodically, especially before schema changes.
 
 ### Boot sequence
 
@@ -162,6 +165,22 @@ Each start runs the following steps in order. Every seeder is idempotent and saf
 6. **HTTP listener** starts
 
 `scripts/seed.mjs` is a separate, older seeder that runs over HTTP. It needs to be updated for the invite-only API before it can be used again (see [Known limitations](#known-limitations)).
+
+---
+
+## Testing
+
+```bash
+npm test
+```
+
+`tests/smoke.test.mjs` boots the real server against a throwaway data directory and exercises it over HTTP. It uses Node's built-in test runner and needs no extra dependencies. It covers:
+
+- session handling, anonymous rejection on protected routes, and refused credentials
+- curator bootstrap from `ADMIN_PASS`, and admin access to the Hall, library, Index of Souls and Curator's Desk
+- boot seeders populating the Index of Souls
+
+GitHub Actions (`.github/workflows/ci.yml`) runs a syntax check and the suite on Node 22 and 24 for every push and pull request.
 
 ---
 
@@ -233,6 +252,7 @@ Every request and response body is JSON. 🔒 = signed-in member. 👑 = curator
 | No self-service passphrase recovery | Members who forget their passphrase need the curator to reset it | Curator reset exists; a self-service flow isn't planned |
 | Writes to disk are debounced | A crash can lose up to about 2 seconds of changes | Acceptable at this scale; a native SQLite driver would remove it |
 | `scripts/seed.mjs` targets the removed registration endpoint | The HTTP seeder no longer runs | Port it to `/api/admin/users`, or rely on the boot seeders |
+| No automated database backups | Losing the volume means losing all data | Schedule a copy of `archive.db` to off-site storage |
 | `mentions` / `investigations` aren't wired up yet | Souls aren't automatically cross-referenced from reports | Planned: scan works for known names and collect unknown names as leads |
 
 ---
@@ -244,6 +264,8 @@ server.js            Express app: middleware, auth guards, all API routes, boot 
 db.js                sql.js setup, schema, migrations, query helpers, persistence
 public/index.html    The single-page client (UI, reader, editors, Curator's Desk)
 scripts/             Boot-time seeders and the legacy HTTP seeder
+tests/               End-to-end smoke tests (npm test)
+.github/workflows/   CI
 Dockerfile           Production image (node:24-alpine)
 railway.toml         Railway build and deploy settings
 .env.example         Documented configuration keys
